@@ -1,5 +1,3 @@
-from _typeshed import IdentityFunction
-from typing import Sequence
 from flask import Flask, Response, request
 from flask_sqlalchemy import SQLAlchemy
 import mysql.connector
@@ -64,8 +62,7 @@ def adiciona_veiculo():
     #validar se veio os parametros
     try:
         #cria um veiculo
-        veiculo = Veiculos(id=body["id"],
-                            veiculo=body["veiculo"],
+        veiculo = Veiculos( veiculo=body["veiculo"],
                             marca=body["marca"],
                             ano=body["ano"],
                             descricao=body["descricao"],
@@ -80,6 +77,36 @@ def adiciona_veiculo():
         print(e)
         return response_gen(400,"veiculo",{},"Erro ao adicionar")
 
+#atualiza
+@app.route("/veiculos/<id>", methods=["PUT"])
+def atualiza_veiculo(id):
+    #pega o veiculo
+    veiculo_obj = Veiculos.query.filter_by(id=id).first()
+    #pega as modificacoes
+    body = request.get_json()
+    try:
+        if('id' in body):
+            veiculo_obj.id = body["id"]
+        if('veiculo' in body):
+            veiculo_obj.veiculo = body["veiculo"]
+        if('marca' in body):
+            veiculo_obj.marca = body["marca"]
+        if('ano' in body):
+            veiculo_obj.ano = body["ano"]
+        if('descricao' in body):
+            veiculo_obj.descricao = body["descricao"]
+        if('vendido' in body):
+            veiculo_obj.vendido = body["vendido"]
+        if('created' in body):
+            veiculo_obj.created = body["created"]
+        if('updated' in body):
+            veiculo_obj.updated = body["updated"]
+        db.session.add(veiculo_obj)
+        db.session.commit()
+        return response_gen(200,"veiculo",veiculo_obj.to_json(),"Atualizado")
+    except Exception as e:
+        print('Erro', e)
+        return response_gen(400,"veiculo",{},"Erro ao atualizar")
 
 
 #padronizando os retornos
