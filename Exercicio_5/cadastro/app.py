@@ -7,8 +7,10 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 #conmfigurar para os parametros locais no formato: dialect+driver://username:password@host:port/database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost:3310/veiculos'
+
 db = SQLAlchemy(app)
 
+#modelo do banco
 class Veiculos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     veiculo = db.Column(db.String(50))
@@ -19,5 +21,36 @@ class Veiculos(db.Model):
     created = db.Column(db.DateTime)
     updated = db.Column(db.DateTime)
 
-db.create_all()
+    #converte para json
+    def to_json(self):
+        return {"id":self.id,
+                "veiculo":self.veiculo,
+                "marca":self.marca,
+                "ano":self.ano,
+                "descricao":self.descricao,
+                "vendido":self.vendido,
+                "created":self.created,
+                "updated":self.updated}
+
+#cria o banco de dados no esquema acima
+#db.create_all()
+
+#seleciona tudo
+@app.route("/veiculos", methods=["GET"])
+def seleciona_veiuclos():
+    #retorna com todos os valores da tabela
+    veiculos_obj = Veiculos.query.all()
+    #converte para json todos os objetos
+    veiculos_json = [Veiculos.to_json() for Veiculos in veiculos_obj]
+    #retorna o json para a requisicao
+    return response_gen(200,"veiculos",veiculos_json,"ok")
+
+#padronizando os retornos
+def response_gen(status, content_name, content,message=False):
+    body = {}
+    body[content_name] = content
+    if(message):
+        body["message"] = message
+    return Response(json.dumps(body),status=status, mimetype="application/json")
+app.run()
 
