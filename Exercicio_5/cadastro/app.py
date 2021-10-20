@@ -1,3 +1,5 @@
+from _typeshed import IdentityFunction
+from typing import Sequence
 from flask import Flask, Response, request
 from flask_sqlalchemy import SQLAlchemy
 import mysql.connector
@@ -56,6 +58,29 @@ def seleciona_veiculo(id):
     return response_gen(200,"veiculo",veiuclo_json)
 
 #adiciona um novo veiculo
+@app.route("/veiculos", methods=["POST"])
+def adiciona_veiculo():
+    body = request.get_json()
+    #validar se veio os parametros
+    try:
+        #cria um veiculo
+        veiculo = Veiculos(id=body["id"],
+                            veiculo=body["veiculo"],
+                            marca=body["marca"],
+                            ano=body["ano"],
+                            descricao=body["descricao"],
+                            vendido=body["vendido"],
+                            created=body["created"],
+                            updated=body["updated"])
+        #abre uma secao e adicionou a classe
+        db.session.add(veiculo)
+        db.session.commit()
+        return response_gen(201,"veiculo",veiculo.to_json(),"Adicionado")
+    except Exception as e:
+        print(e)
+        return response_gen(400,"veiculo",{},"Erro ao adicionar")
+
+
 
 #padronizando os retornos
 def response_gen(status, content_name, content,message=False):
