@@ -45,6 +45,18 @@ def seleciona_veiuclos():
     #retorna o json para a requisicao
     return response_gen(200,"veiculos",veiculos_json,"ok")
 
+#seleciona por id
+@app.route("/veiculos/<id>", methods=["GET"])
+def seleciona_veiculo(id):
+    #retorna o valor que coresponde ao mesmo id passado
+    veiculo_obj = Veiculos.query.filter_by(id=id).first()
+    #converte para json
+    veiuclo_json = veiculo_obj.to_json()
+    #retorna o json para a requisicao
+    return response_gen(200,"veiculo",veiuclo_json)
+
+#adiciona um novo veiculo
+
 #padronizando os retornos
 def response_gen(status, content_name, content,message=False):
     body = {}
