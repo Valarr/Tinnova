@@ -108,6 +108,19 @@ def atualiza_veiculo(id):
         print('Erro', e)
         return response_gen(400,"veiculo",{},"Erro ao atualizar")
 
+#deletar
+@app.route("/veiculos/<id>", methods=["DELETE"])
+def deleta_veiculo(id):
+    veiculo_obj = Veiculos.query.filter_by(id=id).first()
+
+    try:
+        db.session.delete(veiculo_obj)
+        db.session.commit()
+        return response_gen(200,"veiculo",veiculo_obj.to_json(),"Deletado")
+    except Exception as e:
+        print('Erro', e)
+        return response_gen(400,"veiculo",{},"Erro ao deletar")
+
 
 #padronizando os retornos
 def response_gen(status, content_name, content,message=False):
