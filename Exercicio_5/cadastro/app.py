@@ -1,7 +1,9 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request,render_template
 from flask_sqlalchemy import SQLAlchemy
+from datetime import date, datetime
 import mysql.connector
 import json
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -35,6 +37,13 @@ class Veiculos(db.Model):
 #cria o banco de dados no esquema acima
 #db.create_all()
 
+@app.route('/')
+def Index():
+    veiculo = Veiculos.query.all()
+    return render_template("index.html",veiculo=veiculo)
+
+
+#CRUD
 #seleciona tudo
 @app.route("/veiculos", methods=["GET"])
 def seleciona_veiuclos():
@@ -62,17 +71,18 @@ def adiciona_veiculo():
     #validar se veio os parametros
     try:
         #cria um veiculo
+        date_now = datetime.now().isoformat()[:-7]
         veiculo = Veiculos( veiculo=body["veiculo"],
                             marca=body["marca"],
-                            ano=body["ano"],
+                            ano=int(body["ano"]),
                             descricao=body["descricao"],
-                            vendido=body["vendido"],
-                            created=body["created"],
-                            updated=body["updated"])
+                            vendido=False,
+                            created=date_now,
+                            updated=date_now)
         #abre uma secao e adicionou a classe
         db.session.add(veiculo)
         db.session.commit()
-        return response_gen(201,"veiculo",veiculo.to_json(),"Adicionado")
+        return response_gen(201,"veiculo",veiculo.to_json,"Adicionado")
     except Exception as e:
         print(e)
         return response_gen(400,"veiculo",{},"Erro ao adicionar")
@@ -97,10 +107,8 @@ def atualiza_veiculo(id):
             veiculo_obj.descricao = body["descricao"]
         if('vendido' in body):
             veiculo_obj.vendido = body["vendido"]
-        if('created' in body):
-            veiculo_obj.created = body["created"]
         if('updated' in body):
-            veiculo_obj.updated = body["updated"]
+            veiculo_obj.updated = datetime.now().strftime('‘%d-%m-%Y %M:%S:%f')[:-4]
         db.session.add(veiculo_obj)
         db.session.commit()
         return response_gen(200,"veiculo",veiculo_obj.to_json(),"Atualizado")
@@ -121,6 +129,16 @@ def deleta_veiculo(id):
         print('Erro', e)
         return response_gen(400,"veiculo",{},"Erro ao deletar")
 
+
+#find
+@app.route("/veiculos/find/<q>", methods=["GET"])
+def acha_veiculo(q):
+    try:
+        veiculo_obj = Veiculos.query.filter(Veiculos.veiculo.like('%'+q+'%')).first()
+        return response_gen(200,"veiculo",veiculo_obj.to_json(),"Achou")
+    except Exception as e:
+        print('Erro', e)
+        return response_gen(400,"veiculo",{},"Erro ao procurar")
 
 #padronizando os retornos
 def response_gen(status, content_name, content,message=False):
